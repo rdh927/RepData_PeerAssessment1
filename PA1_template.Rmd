@@ -16,7 +16,7 @@ activity <- read.csv("activity.csv")
 ## Calculate the total number of steps taken per day
 total_steps <- tapply(activity$steps, activity$date,sum, na.rm=TRUE)
 ```
-No addition processing/transformation was done prior to analysis.
+No additional processing/transformation was done prior to analysis.
 
 ## What is mean total number of steps taken per day?
 ```{r, echo=TRUE}
