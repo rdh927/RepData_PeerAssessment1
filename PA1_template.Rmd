@@ -1,25 +1,101 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Peer Assessment 1"
+author: "rdh927"
+date: "Monday, October 12, 2015"
+output: html_document
 ---
-
-
 ## Loading and preprocessing the data
+```{r, echo = FALSE}
+## Set the working directory
+setwd("C:/Users/Rachel/Documents/R Programming/reproddata")
+```
+```{r, echo=TRUE}
+## Read in the dataset
+activity <- read.csv("activity.csv")
 
-
+## Calculate the total number of steps taken per day
+total_steps <- tapply(activity$steps, activity$date,sum, na.rm=TRUE)
+```
+No addition processing/transformation was done prior to analysis.
 
 ## What is mean total number of steps taken per day?
+```{r, echo=TRUE}
+## Make a histogram of the total steps per day
+hist(total_steps)
 
+## Calculate the mean total steps/day
+mean_steps <- mean(total_steps)
 
+## Calculate the median total steps/day
+median_steps <- median(total_steps)
+```
+The mean total number of steps taken per day is 9354. The median is 10,395.
 
 ## What is the average daily activity pattern?
+```{r, echo=FALSE}
+mean_steps_int <- tapply(activity$steps, activity$interval,mean, na.rm=TRUE)
+plot(activity$interval[1:288],mean_steps_int, type="l",ylab = "Steps", xlab = "Interval (min)")
+```
+```{r, echo=TRUE}
+## Interval containing maximum number of steps?
+max(mean_steps_int)
+print(subset(mean_steps_int, mean_steps_int >= 206))
+```
+The inverval containing the maximum number of steps is 835-840 minutes.
 
+## Inputting missing values
+The original dataset contained missing values; depending on how these missing values are treated, they may affect the results of our analysis. We replaced the missing values with the mean number of steps averaged over all days and intervals, and performed our analyses again.
 
+```{r, echo=TRUE}
+## How many NAs are there?
+nona <- na.omit(activity)
+num_nas <- as.numeric(nrow(activity)-nrow(nona))
 
-## Imputing missing values
+## Fill in missing values with average number of steps for a given interval
+## create new data set with missing values filled in
+activity2 <- activity
+activity2$steps[which(is.na(activity2$steps))] <- mean(mean_steps_int)
+```
+The number of NAs is 2304.
 
+```{r, echo=FALSE}
+## make a histogram of the total number of steps taken each day; report the mean and median total number of steps taken per day.
+## compare to ignoring NAs. what is the impact of inputting missing data?
+total_steps2 <- tapply(activity2$steps, activity2$date,sum, na.rm=TRUE)
+hist2 <- hist(total_steps2)
+```
+```{r, echo=TRUE}
+## Calculate the mean total steps/day
+mean_steps2 <- mean(total_steps2)
 
+## Calculate the median total steps/day
+median_steps2 <- median(total_steps2)
+```
+Upon replacement of the NA values for the average number of steps, we find that the new mean and median are both 10766. The median has increased slightly, while the mean has increased considerably and become much closer to the median, meaning the data has, as we expect, become much more well-distributed (more normal).
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r, echo=TRUE}
+## Create new factor with two levels - "weekday" and "weekend" (use weekdays() function)
+activity$date <- as.character(activity$date)
+activity$date <- as.POSIXct(activity$date, format="%Y-%m-%d")
+
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+## create a logical vector with `%in%` and `weekdays` 
+## convert to factor and specify the `levels`
+activity$weekday <- factor((weekdays(activity$date) %in% weekdays1),levels=c(FALSE, TRUE), labels=c('weekend', 'weekday'))
+
+## subset activity into weekend and weekday days
+weekdays <- subset(activity, weekday == 'weekday')
+weekends <- subset(activity, weekday == 'weekend')
+
+mean_steps_weekend <- tapply(weekends$steps, weekends$interval,mean, na.rm=TRUE)
+mean_steps_weekday <- tapply(weekdays$steps, weekdays$interval,mean, na.rm=TRUE)
+```
+
+```{r, echo=FALSE}
+## Two-panel plot comparing weekdays and weekends
+par(mfrow=c(2,1))
+plot(activity$interval[1:288],mean_steps_weekend, type="l", main = "weekend",ylab = "Steps", xlab = "Interval (min)")
+plot(activity$interval[1:288],mean_steps_weekday, type = "l", main = "weekday",ylab = "Steps", xlab = "Interval (min)")
+```
+
